@@ -1,0 +1,133 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  * {
+    -webkit-tap-highlight-color: transparent;
+    -webkit-touch-callout: none;
+  }
+
+  html {
+    background-color: #050507;
+    overscroll-behavior: none;
+  }
+
+  body {
+    background-color: #050507;
+    color: #e8e8ec;
+    font-family: 'DM Sans', system-ui, sans-serif;
+    overscroll-behavior: none;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  input[type='number'] {
+    -moz-appearance: textfield;
+  }
+  input[type='number']::-webkit-outer-spin-button,
+  input[type='number']::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+  }
+
+  ::-webkit-scrollbar {
+    width: 0;
+    background: transparent;
+  }
+}
+
+@layer components {
+  .font-display {
+    font-family: 'Syne', sans-serif;
+  }
+
+  .font-mono {
+    font-family: 'DM Mono', monospace;
+  }
+
+  .card {
+    @apply bg-[#0a0a0c] border border-[#131316] rounded-2xl;
+  }
+
+  .btn-primary {
+    @apply bg-white text-[#050507] font-display font-bold rounded-xl px-6 py-3 active:scale-95 transition-transform;
+  }
+
+  .btn-ghost {
+    @apply border border-[#131316] text-[#888] rounded-xl px-4 py-2 active:scale-95 transition-transform;
+  }
+
+  .muscle-chip {
+    @apply rounded-full px-3 py-1 text-xs font-mono font-medium;
+  }
+
+  .set-row {
+    @apply flex items-center gap-2 py-2 border-b border-[#0f0f12] last:border-0;
+  }
+
+  .number-input {
+    @apply bg-[#0f0f12] border border-[#1a1a20] rounded-lg text-center font-display font-bold text-lg w-16 h-10 focus:outline-none focus:border-[#333] transition-colors;
+  }
+}
+
+@layer utilities {
+  .safe-pb {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+
+  .safe-pt {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .pr-glow {
+    animation: prGlow 1.5s ease-out;
+  }
+
+  @keyframes prGlow {
+    0% {
+      box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.8), 0 0 20px rgba(251, 191, 36, 0.4);
+    }
+    50% {
+      box-shadow: 0 0 0 12px rgba(251, 191, 36, 0), 0 0 40px rgba(251, 191, 36, 0.2);
+    }
+    100% {
+      box-shadow: 0 0 0 0 rgba(251, 191, 36, 0), 0 0 0 rgba(251, 191, 36, 0);
+    }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(16px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .fade-in-up {
+    animation: fadeInUp 0.3s ease-out forwards;
+  }
+
+  @keyframes pulse-ring {
+    0% {
+      box-shadow: 0 0 0 0 rgba(251, 191, 36, 0.6);
+    }
+    100% {
+      box-shadow: 0 0 0 16px rgba(251, 191, 36, 0);
+    }
+  }
+
+  .pulse-ring {
+    animation: pulse-ring 1s ease-out infinite;
+  }
+}
