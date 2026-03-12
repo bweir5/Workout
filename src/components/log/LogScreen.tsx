@@ -9,11 +9,21 @@ const MUSCLES = ['All', 'Chest', 'Back', 'Legs', 'Arms', 'Shoulders']
 export function LogScreen() {
   const [filter, setFilter] = useState('All')
   const [expanded, setExpanded] = useState<string | null>(null)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [sessions, setSessions] = useState(() =>
+    getSessions().filter(s => s.finishedAt)
+  )
 
-  const sessions = getSessions()
-    .filter(s => s.finishedAt)
+  const filtered = sessions
     .filter(s => filter === 'All' || s.muscle === filter)
     .sort((a, b) => (b.finishedAt ?? 0) - (a.finishedAt ?? 0))
+
+  const handleDelete = (id: string) => {
+    deleteSession(id)
+    setSessions(getSessions().filter(s => s.finishedAt))
+    setDeletingId(null)
+    if (expanded === id) setExpanded(null)
+  }
 
   return (
     <div className="pb-24 max-w-lg mx-auto px-4 pt-4">
@@ -36,26 +46,48 @@ export function LogScreen() {
         ))}
       </div>
 
-      {sessions.length === 0 ? (
+      {filtered.length === 0 ? (
         <div className="card p-8 text-center">
           <div className="font-display font-bold text-[#333] text-xl mb-2">No sessions yet</div>
           <div className="font-mono text-xs text-[#333]">Complete a workout to see it here</div>
         </div>
       ) : (
         <div className="space-y-3">
-          {sessions.map(session => (
+          {filtered.map(session => (
             <SessionCard
               key={session.id}
               session={session}
               isExpanded={expanded === session.id}
               onToggle={() => setExpanded(expanded === session.id ? null : session.id)}
-              onDelete={() => {
-                if (confirm('Delete this session?')) {
-                  deleteSession(session.id)
-                }
-              }}
+              onDelete={() => setDeletingId(session.id)}
             />
           ))}
+        </div>
+      )}
+
+      {/* Delete confirm modal */}
+      {deletingId && (
+        <div className="fixed inset-0 bg-[#050507]/90 backdrop-blur-sm z-50 flex items-end justify-center p-4">
+          <div className="card p-6 w-full max-w-xs animate-spring-in">
+            <div className="font-display font-bold text-white text-xl mb-1">Delete Session?</div>
+            <div className="font-mono text-sm text-[#555] mb-5">
+              This cannot be undone.
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setDeletingId(null)}
+                className="flex-1 bg-[#131316] border border-[#1a1a20] rounded-xl py-3 font-mono text-sm text-[#888] active:scale-95 transition-transform"
+              >
+                Keep
+              </button>
+              <button
+                onClick={() => handleDelete(deletingId)}
+                className="flex-1 rounded-xl py-3 font-mono text-sm font-medium text-red-400 border border-red-500/20 bg-red-500/5 active:scale-95 transition-transform"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
         </div>
       )}
     </div>
@@ -96,37 +128,51 @@ function SessionCard({
 
   return (
     <div className="card overflow-hidden" style={{ borderColor: `${color}25` }}>
-      <button
-        className="w-full flex items-start justify-between p-4 text-left"
-        onClick={onToggle}
-      >
-        <div className="flex items-start gap-3">
-          <div
-            className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 font-display font-bold text-sm"
-            style={{ backgroundColor: `${color}20`, color }}
-          >
-            {session.muscle.slice(0, 2)}
+      <div className="flex items-stretch">
+        {/* Main tap area */}
+        <button
+          className="flex-1 flex items-start justify-between p-4 text-left active:bg-white/[0.02] transition-colors"
+          onClick={onToggle}
+        >
+          <div className="flex items-start gap-3">
+            <div
+              className="w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 font-display font-bold text-sm"
+              style={{ backgroundColor: `${color}20`, color }}
+            >
+              {session.muscle.slice(0, 2)}
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <span className="font-display font-bold text-white">{session.muscle}</span>
+                {hasPR && <span className="font-mono text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">★ PR</span>}
+              </div>
+              <div className="font-mono text-xs text-[#444] mt-0.5">
+                {formatDate(session.finishedAt!)}
+              </div>
+            </div>
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="font-display font-bold text-white">{session.muscle}</span>
-              {hasPR && <span className="font-mono text-[9px] bg-amber-500/20 text-amber-400 px-1.5 py-0.5 rounded">★ PR</span>}
-            </div>
-            <div className="font-mono text-xs text-[#444] mt-0.5">
-              {formatDate(session.finishedAt!)}
-            </div>
+          <div className="flex flex-col items-end gap-1">
+            <div className="font-mono text-xs text-[#555]">{formatDuration(duration)}</div>
+            <div className="font-mono text-[10px] text-[#444]">{totalVolume.toLocaleString()} lbs</div>
+            {maxORM > 0 && (
+              <div className="font-mono text-[10px]" style={{ color }}>
+                1RM ~{Math.round(maxORM)}
+              </div>
+            )}
           </div>
-        </div>
-        <div className="flex flex-col items-end gap-1">
-          <div className="font-mono text-xs text-[#555]">{formatDuration(duration)}</div>
-          <div className="font-mono text-[10px] text-[#444]">{totalVolume.toLocaleString()} lbs</div>
-          {maxORM > 0 && (
-            <div className="font-mono text-[10px]" style={{ color }}>
-              1RM ~{Math.round(maxORM)}
-            </div>
-          )}
-        </div>
-      </button>
+        </button>
+
+        {/* Delete button — always visible */}
+        <button
+          onClick={e => { e.stopPropagation(); onDelete() }}
+          className="px-3 flex items-center justify-center border-l border-[#0f0f12] text-[#333] active:text-red-400 active:bg-red-500/5 transition-colors"
+          aria-label="Delete session"
+        >
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none">
+            <path d="M5 1h5M1 4h13M6 7v5M9 7v5M2 4l1 9a1 1 0 001 1h7a1 1 0 001-1l1-9" stroke="currentColor" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round" />
+          </svg>
+        </button>
+      </div>
 
       {isExpanded && (
         <div className="px-4 pb-4 border-t border-[#0f0f12] fade-in-up">
@@ -207,14 +253,6 @@ function SessionCard({
               <div className="font-mono text-xs text-[#666] leading-relaxed">{session.aiPostAnalysis}</div>
             </div>
           )}
-
-          {/* Delete */}
-          <button
-            onClick={onDelete}
-            className="mt-3 font-mono text-[10px] text-[#333] hover:text-red-500 transition-colors"
-          >
-            Delete session
-          </button>
         </div>
       )}
     </div>

@@ -36,6 +36,7 @@ export function ActiveWorkout({ muscle, onFinish, onCancel }: Props) {
   const [postAnalysisLoading, setPostAnalysisLoading] = useState(false)
   const [showPreBrief, setShowPreBrief] = useState(true)
   const [showFinishConfirm, setShowFinishConfirm] = useState(false)
+  const [showCancelConfirm, setShowCancelConfirm] = useState(false)
   const [finishedSession, setFinishedSession] = useState<Session | null>(null)
   const [elapsed, setElapsed] = useState(0)
   const startTimeRef = useRef<number>(Date.now())
@@ -258,10 +259,10 @@ export function ActiveWorkout({ muscle, onFinish, onCancel }: Props) {
       <div className="sticky top-0 z-20 bg-[#050507]/95 backdrop-blur-sm border-b border-[#131316] px-4 py-3">
         <div className="max-w-lg mx-auto flex items-center justify-between">
           <button
-            onClick={onCancel}
+            onClick={() => setShowCancelConfirm(true)}
             className="font-mono text-sm text-[#555] active:scale-95 transition-transform"
           >
-            ← Cancel
+            ← Back
           </button>
           <div className="text-center">
             <div className="font-display font-bold text-white" style={{ color }}>{muscle}</div>
@@ -338,6 +339,45 @@ export function ActiveWorkout({ muscle, onFinish, onCancel }: Props) {
           isCompound={timerIsCompound}
           onClose={() => setShowTimer(false)}
         />
+      )}
+
+      {/* Cancel / discard modal */}
+      {showCancelConfirm && (
+        <div className="fixed inset-0 bg-[#050507]/90 backdrop-blur-sm z-50 flex items-end justify-center p-4">
+          <div className="card p-6 w-full max-w-xs animate-spring-in">
+            <div className="font-display font-bold text-white text-xl mb-1">Leave Workout?</div>
+            <div className="font-mono text-sm text-[#555] mb-5">
+              Your progress is saved and can be resumed later.
+            </div>
+            <div className="flex flex-col gap-2">
+              <button
+                onClick={() => setShowCancelConfirm(false)}
+                className="w-full bg-[#131316] border border-[#1a1a20] rounded-xl py-3 font-mono text-sm text-[#888] active:scale-95 transition-transform"
+              >
+                Keep Training
+              </button>
+              <button
+                onClick={() => {
+                  setShowCancelConfirm(false)
+                  onCancel()
+                }}
+                className="w-full bg-[#131316] border border-[#1a1a20] rounded-xl py-3 font-mono text-sm text-[#666] active:scale-95 transition-transform"
+              >
+                Save & Exit
+              </button>
+              <button
+                onClick={() => {
+                  saveWIP(null)
+                  setShowCancelConfirm(false)
+                  onCancel()
+                }}
+                className="w-full rounded-xl py-3 font-mono text-sm text-red-400 border border-red-500/20 bg-red-500/5 active:scale-95 transition-transform"
+              >
+                Discard Workout
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Finish confirm modal */}

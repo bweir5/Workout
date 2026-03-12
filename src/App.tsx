@@ -4,8 +4,8 @@ import { ActiveWorkout } from '@/components/workout/ActiveWorkout'
 import { ProgressScreen } from '@/components/progress/ProgressScreen'
 import { LogScreen } from '@/components/log/LogScreen'
 import { SettingsScreen } from '@/components/settings/SettingsScreen'
-import { getWIP } from '@/lib/storage'
-import type { MuscleGroup } from '@/types'
+import { getWIP, saveWIP } from '@/lib/storage'
+import type { MuscleGroup, Session } from '@/types'
 
 type Screen = 'home' | 'workout' | 'progress' | 'log' | 'settings'
 
@@ -63,9 +63,8 @@ const NAV_ITEMS: Array<{ id: Screen; label: string; icon: React.ReactNode }> = [
 export default function App() {
   const [screen, setScreen] = useState<Screen>('home')
   const [workoutMuscle, setWorkoutMuscle] = useState<MuscleGroup | null>(null)
-
-  // Check for WIP session on mount
-  const wip = getWIP()
+  const [wip, setWip] = useState<Session | null>(() => getWIP())
+  const [showDiscardConfirm, setShowDiscardConfirm] = useState(false)
 
   const startWorkout = useCallback((muscle: MuscleGroup) => {
     setWorkoutMuscle(muscle)
@@ -73,13 +72,22 @@ export default function App() {
   }, [])
 
   const handleWorkoutFinish = useCallback(() => {
+    setWip(null)
     setWorkoutMuscle(null)
     setScreen('home')
   }, [])
 
   const handleWorkoutCancel = useCallback(() => {
+    // Re-read WIP from storage in case it was updated or cleared by ActiveWorkout
+    setWip(getWIP())
     setWorkoutMuscle(null)
     setScreen('home')
+  }, [])
+
+  const handleDiscardWIP = useCallback(() => {
+    saveWIP(null)
+    setWip(null)
+    setShowDiscardConfirm(false)
   }, [])
 
   // Active workout screen (full screen, no nav)
@@ -97,16 +105,29 @@ export default function App() {
     <div className="min-h-screen bg-[#050507] relative">
       {/* WIP banner */}
       {wip && screen !== 'workout' && (
-        <div
-          className="mx-4 mt-4 max-w-lg mx-auto card p-3 flex items-center justify-between cursor-pointer active:scale-[0.99] transition-transform"
-          onClick={() => startWorkout(wip.muscle as MuscleGroup)}
-          style={{ borderColor: 'rgba(251, 191, 36, 0.2)', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}
-        >
-          <div>
-            <div className="font-display font-bold text-amber-400 text-sm">Resume {wip.muscle}</div>
-            <div className="font-mono text-[10px] text-amber-400/50">Session in progress — tap to continue</div>
+        <div className="mx-4 mt-4 max-w-lg mx-auto">
+          <div
+            className="card flex items-center justify-between"
+            style={{ borderColor: 'rgba(251, 191, 36, 0.2)', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}
+          >
+            <button
+              className="flex-1 flex items-center justify-between p-3 active:scale-[0.99] transition-transform"
+              onClick={() => startWorkout(wip.muscle as MuscleGroup)}
+            >
+              <div>
+                <div className="font-display font-bold text-amber-400 text-sm">Resume {wip.muscle}</div>
+                <div className="font-mono text-[10px] text-amber-400/50">Tap to continue session</div>
+              </div>
+              <span className="font-mono text-amber-400 text-lg mr-3">→</span>
+            </button>
+            <button
+              onClick={() => setShowDiscardConfirm(true)}
+              className="px-3 py-4 font-mono text-xs text-amber-400/40 hover:text-red-400 transition-colors border-l border-amber-500/10"
+              aria-label="Discard workout"
+            >
+              ✕
+            </button>
           </div>
-          <span className="font-mono text-amber-400 text-lg">→</span>
         </div>
       )}
 
@@ -122,30 +143,44 @@ export default function App() {
       <nav className="fixed bottom-0 inset-x-0 bg-[#050507]/95 backdrop-blur-md border-t border-[#131316] safe-pb z-30">
         <div className="flex max-w-lg mx-auto">
           {NAV_ITEMS.map(item => {
-            const isActive = screen === item.id && !(screen === 'workout' && workoutMuscle)
+            const isWorkoutTab = item.id === 'workout'
+            const isActive = screen === item.id
+
             return (
               <button
                 key={item.id}
                 onClick={() => {
-                  if (item.id === 'workout') {
-                    if (!workoutMuscle) {
+                  if (isWorkoutTab) {
+                    if (wip) {
+                      // Resume existing workout
+                      startWorkout(wip.muscle as MuscleGroup)
+                    } else {
+                      // Go to home to pick a muscle and start a workout
                       setScreen('home')
                     }
                   } else {
                     setScreen(item.id)
                   }
                 }}
-                className={`flex-1 flex flex-col items-center py-3 gap-1 transition-all active:scale-90 ${
-                  isActive ? 'text-white' : 'text-[#444]'
+                className={`flex-1 flex flex-col items-center py-3 gap-1 transition-all active:scale-90 relative ${
+                  isWorkoutTab && wip
+                    ? 'text-amber-400'
+                    : isActive
+                    ? 'text-white'
+                    : 'text-[#444]'
                 }`}
               >
-                <div className={`transition-transform ${isActive ? 'scale-110' : ''}`}>
+                {/* WIP dot indicator on Workout tab */}
+                {isWorkoutTab && wip && (
+                  <div className="absolute top-2 right-[calc(50%-14px)] w-1.5 h-1.5 rounded-full bg-amber-400" />
+                )}
+                <div className={`transition-transform ${isActive && !isWorkoutTab ? 'scale-110' : ''}`}>
                   {item.icon}
                 </div>
-                <span className={`font-mono text-[10px] ${isActive ? 'text-white' : 'text-[#333]'}`}>
-                  {item.label}
+                <span className={`font-mono text-[10px] ${isWorkoutTab && wip ? 'text-amber-400' : isActive ? 'text-white' : 'text-[#333]'}`}>
+                  {isWorkoutTab && wip ? 'Resume' : item.label}
                 </span>
-                {isActive && (
+                {isActive && !isWorkoutTab && (
                   <div className="absolute bottom-1 w-1 h-1 rounded-full bg-white" />
                 )}
               </button>
@@ -153,6 +188,32 @@ export default function App() {
           })}
         </div>
       </nav>
+
+      {/* Discard WIP confirm modal */}
+      {showDiscardConfirm && (
+        <div className="fixed inset-0 bg-[#050507]/90 backdrop-blur-sm z-50 flex items-end justify-center p-4">
+          <div className="card p-6 w-full max-w-xs animate-spring-in">
+            <div className="font-display font-bold text-white text-xl mb-1">Discard Workout?</div>
+            <div className="font-mono text-sm text-[#555] mb-5">
+              Your {wip?.muscle} session will be permanently deleted.
+            </div>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDiscardConfirm(false)}
+                className="flex-1 bg-[#131316] border border-[#1a1a20] rounded-xl py-3 font-mono text-sm text-[#888] active:scale-95 transition-transform"
+              >
+                Keep
+              </button>
+              <button
+                onClick={handleDiscardWIP}
+                className="flex-1 rounded-xl py-3 font-mono text-sm font-medium text-red-400 border border-red-500/20 bg-red-500/5 active:scale-95 transition-transform"
+              >
+                Discard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

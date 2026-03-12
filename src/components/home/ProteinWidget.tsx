@@ -169,21 +169,22 @@ export function ProteinWidget({ onUpdate }: Props) {
       {todayEntries.length > 0 && (
         <div className="border-t border-[#131316] pt-3 space-y-1.5">
           {[...todayEntries].reverse().map(entry => (
-            <div key={entry.id} className="flex items-center justify-between group">
+            <div key={entry.id} className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 <span className="font-display font-bold text-sm text-white">{entry.grams}g</span>
                 {entry.label && (
                   <span className="font-mono text-xs text-[#555]">{entry.label}</span>
                 )}
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-3">
                 <span className="font-mono text-xs text-[#444]">{formatTime(entry.loggedAt)}</span>
                 <button
                   onClick={() => {
                     deleteProteinEntry(entry.id)
                     onUpdate()
                   }}
-                  className="font-mono text-xs text-[#333] hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100"
+                  className="w-6 h-6 flex items-center justify-center rounded-full text-[#444] active:text-red-400 active:bg-red-500/10 transition-colors"
+                  aria-label="Remove entry"
                 >
                   ×
                 </button>

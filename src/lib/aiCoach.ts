@@ -89,7 +89,7 @@ Give me a pre-workout brief: 3–4 sentences. Reference today's bodyweight, prot
 
   try {
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 300,
       system: buildSystemPrompt(),
       messages: [{ role: 'user', content: userMessage }]
@@ -152,7 +152,7 @@ Be direct, specific, reference actual numbers.`
 
   try {
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 500,
       system: buildSystemPrompt(),
       messages: [{ role: 'user', content: userMessage }]
@@ -219,7 +219,7 @@ Reference specific numbers. Be a coach, not a chatbot.`
 
   try {
     const response = await client.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-6',
       max_tokens: 700,
       system: buildSystemPrompt(),
       messages: [{ role: 'user', content: userMessage }]

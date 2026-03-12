@@ -17,6 +17,7 @@ export function HomeScreen({ onStartWorkout }: Props) {
   const [tick, setTick] = useState(0)
   const [checkInLoading, setCheckInLoading] = useState(false)
   const [checkInText, setCheckInText] = useState<string | null>(null)
+  const [showNutrition, setShowNutrition] = useState(false)
 
   const refresh = useCallback(() => setTick(t => t + 1), [])
 
@@ -46,7 +47,7 @@ export function HomeScreen({ onStartWorkout }: Props) {
   }
 
   return (
-    <div className="pb-24 px-4 pt-4 max-w-lg mx-auto space-y-4" key={tick}>
+    <div className="pb-24 px-4 pt-4 max-w-lg mx-auto space-y-3" key={tick}>
       {/* Header */}
       <div className="flex items-center justify-between">
         <div>
@@ -96,17 +97,44 @@ export function HomeScreen({ onStartWorkout }: Props) {
         </div>
       )}
 
-      {/* Bodyweight widget */}
-      <BodyweightWidget onUpdate={refresh} />
+      {/* Muscle selector — primary action, shown first */}
+      <MuscleSelector onSelectMuscle={onStartWorkout} />
 
-      {/* Protein widget */}
-      <ProteinWidget onUpdate={refresh} />
+      {/* Nutrition section — collapsible to reduce scroll */}
+      <div className="card overflow-hidden">
+        <button
+          onClick={() => setShowNutrition(v => !v)}
+          className="w-full flex items-center justify-between px-4 py-3 active:bg-white/5 transition-colors"
+        >
+          <div className="flex items-center gap-3">
+            <span className="font-mono text-xs text-[#555] uppercase tracking-widest">Nutrition</span>
+            {proteinCompliance >= 90 && (
+              <span className="font-mono text-[10px] text-green-400">✓ On target</span>
+            )}
+            {proteinCompliance >= 70 && proteinCompliance < 90 && (
+              <span className="font-mono text-[10px] text-amber-400">{proteinCompliance.toFixed(0)}%</span>
+            )}
+            {proteinCompliance < 70 && (
+              <span className="font-mono text-[10px] text-red-400">⚠ {proteinCompliance.toFixed(0)}%</span>
+            )}
+          </div>
+          <span className="font-mono text-sm text-[#444] transition-transform duration-200" style={{ display: 'inline-block', transform: showNutrition ? 'rotate(180deg)' : 'none' }}>
+            ∨
+          </span>
+        </button>
+
+        {showNutrition && (
+          <div className="border-t border-[#131316] fade-in-up">
+            <div className="p-4 space-y-4">
+              <BodyweightWidget onUpdate={refresh} />
+              <ProteinWidget onUpdate={refresh} />
+            </div>
+          </div>
+        )}
+      </div>
 
       {/* Weekly volume compliance */}
       <WeeklyVolumeCompliance />
-
-      {/* Muscle selector */}
-      <MuscleSelector onSelectMuscle={onStartWorkout} />
 
       {/* Weekly check-in */}
       <button
