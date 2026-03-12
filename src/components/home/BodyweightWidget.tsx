@@ -5,11 +5,8 @@ import {
   addBodyweightEntry,
   getBodyweightEntries
 } from '@/lib/storage'
-import {
-  get7dayRollingAverage,
-  detectTrainingPhase
-} from '@/lib/progressionEngine'
-import { getPhaseColor, getPhaseIcon, todayString } from '@/lib/utils'
+import { get7dayRollingAverage, detectTrainingPhase } from '@/lib/progressionEngine'
+import { getPhaseColor, todayString } from '@/lib/utils'
 
 interface Props {
   onUpdate: () => void
@@ -17,7 +14,8 @@ interface Props {
 
 export function BodyweightWidget({ onUpdate }: Props) {
   const [inputValue, setInputValue] = useState('')
-  const [saving, setSaving] = useState(false)
+  const [editing, setEditing] = useState(false)
+  const [editValue, setEditValue] = useState('')
 
   const todayEntry = getTodayBodyweight()
   const lastEntry = getLastBodyweight()
@@ -26,96 +24,97 @@ export function BodyweightWidget({ onUpdate }: Props) {
   const rollingAvg = get7dayRollingAverage(entries, today)
   const phase = detectTrainingPhase(entries)
   const phaseColor = getPhaseColor(phase)
-  const phaseIcon = getPhaseIcon(phase)
 
   const handleSave = () => {
     const val = parseFloat(inputValue)
     if (!val || val < 50 || val > 500) return
-    setSaving(true)
-    addBodyweightEntry({
-      date: today,
-      weight: val,
-      loggedAt: Date.now()
-    })
+    addBodyweightEntry({ date: today, weight: val, loggedAt: Date.now() })
     setInputValue('')
-    setSaving(false)
     onUpdate()
+  }
+
+  const handleEditSave = () => {
+    const val = parseFloat(editValue)
+    if (val > 50 && val < 500) {
+      addBodyweightEntry({ date: today, weight: val, loggedAt: Date.now() })
+      onUpdate()
+    }
+    setEditing(false)
+    setEditValue('')
   }
 
   if (todayEntry) {
     return (
-      <div className="card p-4">
-        <div className="flex items-start justify-between">
-          <div>
-            <div className="font-mono text-xs text-[#555] uppercase tracking-widest mb-1">Bodyweight</div>
-            <div className="flex items-baseline gap-2">
-              <span className="font-display text-4xl font-bold text-white">{todayEntry.weight}</span>
-              <span className="font-mono text-sm text-[#555]">lbs</span>
+      <div className="flex items-center justify-between">
+        <div>
+          <div className="font-mono text-[10px] text-[#444] uppercase tracking-widest mb-0.5">Bodyweight</div>
+          {editing ? (
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                inputMode="decimal"
+                value={editValue}
+                onChange={e => setEditValue(e.target.value)}
+                onKeyDown={e => { if (e.key === 'Enter') handleEditSave(); if (e.key === 'Escape') setEditing(false) }}
+                placeholder={todayEntry.weight.toString()}
+                autoFocus
+                className="w-24 bg-[#0f0f12] border border-[#333] rounded-lg px-2 py-1 font-display text-xl font-bold text-white focus:outline-none"
+              />
+              <button onClick={handleEditSave} className="font-mono text-xs text-[#888] active:text-white">save</button>
+              <button onClick={() => setEditing(false)} className="font-mono text-xs text-[#444]">cancel</button>
             </div>
-            {rollingAvg && (
-              <div className="font-mono text-xs text-[#555] mt-1">
-                7-day avg: <span className="text-[#888]">{rollingAvg.toFixed(1)} lbs</span>
-              </div>
-            )}
+          ) : (
+            <div className="flex items-baseline gap-1.5">
+              <span className="font-display font-bold text-2xl text-white">{todayEntry.weight}</span>
+              <span className="font-mono text-xs text-[#444]">lbs</span>
+              {rollingAvg && (
+                <span className="font-mono text-[10px] text-[#444] ml-1">avg {rollingAvg.toFixed(1)}</span>
+              )}
+            </div>
+          )}
+        </div>
+        <div className="flex items-center gap-3">
+          <div
+            className="px-2 py-1 rounded-md text-[10px] font-mono font-medium"
+            style={{ backgroundColor: `${phaseColor}18`, color: phaseColor }}
+          >
+            {phase}
           </div>
-          <div className="flex flex-col items-end gap-2">
-            <div
-              className="px-3 py-1.5 rounded-full text-xs font-mono font-medium"
-              style={{ backgroundColor: `${phaseColor}22`, color: phaseColor }}
-            >
-              {phaseIcon} {phase.toUpperCase()}
-            </div>
+          {!editing && (
             <button
-              onClick={() => {
-                const newVal = prompt('Update bodyweight (lbs):', todayEntry.weight.toString())
-                if (newVal) {
-                  const val = parseFloat(newVal)
-                  if (val > 50 && val < 500) {
-                    addBodyweightEntry({ date: today, weight: val, loggedAt: Date.now() })
-                    onUpdate()
-                  }
-                }
-              }}
-              className="font-mono text-xs text-[#444] underline underline-offset-2"
+              onClick={() => { setEditing(true); setEditValue(todayEntry.weight.toString()) }}
+              className="font-mono text-[10px] text-[#444] active:text-[#888]"
             >
               edit
             </button>
-          </div>
+          )}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="card p-4">
-      <div className="font-mono text-xs text-[#555] uppercase tracking-widest mb-3">Morning Bodyweight</div>
-      <div className="flex items-center gap-3">
-        <div className="relative flex-1">
-          <div className="absolute inset-0 rounded-xl bg-amber-500/5 animate-pulse pointer-events-none" />
-          <input
-            type="number"
-            inputMode="decimal"
-            placeholder={lastEntry ? `last: ${lastEntry.weight}` : '170.0'}
-            value={inputValue}
-            onChange={e => setInputValue(e.target.value)}
-            onKeyDown={e => e.key === 'Enter' && handleSave()}
-            className="w-full bg-[#0f0f12] border border-amber-500/30 rounded-xl px-4 py-3 font-display text-xl font-bold text-white focus:outline-none focus:border-amber-500/60 placeholder:text-[#333] transition-colors"
-          />
-        </div>
-        <div className="font-mono text-sm text-[#555] w-6">lbs</div>
+    <div>
+      <div className="font-mono text-[10px] text-[#444] uppercase tracking-widest mb-2">Bodyweight</div>
+      <div className="flex items-center gap-2">
+        <input
+          type="number"
+          inputMode="decimal"
+          placeholder={lastEntry ? lastEntry.weight.toString() : '170'}
+          value={inputValue}
+          onChange={e => setInputValue(e.target.value)}
+          onKeyDown={e => e.key === 'Enter' && handleSave()}
+          className="flex-1 bg-[#0f0f12] border border-[#1a1a20] rounded-lg px-3 py-2.5 font-display text-lg font-bold text-white focus:outline-none focus:border-[#333] placeholder:text-[#333] transition-colors"
+        />
+        <span className="font-mono text-xs text-[#444]">lbs</span>
         <button
           onClick={handleSave}
-          disabled={saving || !inputValue}
-          className="bg-white text-[#050507] font-display font-bold rounded-xl px-5 py-3 active:scale-95 transition-transform disabled:opacity-40 disabled:scale-100 whitespace-nowrap"
+          disabled={!inputValue}
+          className="bg-white text-[#050507] font-display font-bold rounded-lg px-4 py-2.5 text-sm active:scale-95 transition-transform disabled:opacity-30"
         >
           Log
         </button>
       </div>
-      {lastEntry && (
-        <div className="font-mono text-xs text-[#444] mt-2">
-          Last logged: {lastEntry.weight} lbs on {lastEntry.date}
-        </div>
-      )}
     </div>
   )
 }

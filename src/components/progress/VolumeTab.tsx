@@ -7,14 +7,13 @@ import { VOLUME_LANDMARKS } from '@/lib/progressionEngine'
 import { getMesocycleWeekColor } from '@/lib/utils'
 import type { MuscleGroup } from '@/types'
 
-const MUSCLES: MuscleGroup[] = ['Chest', 'Back', 'Legs', 'Arms', 'Shoulders']
+const MUSCLES: MuscleGroup[] = ['Chest', 'Back', 'Legs', 'Arms']
 
 const MUSCLE_COLORS: Record<MuscleGroup, string> = {
   Chest: 'hsl(4, 75%, 52%)',
   Back: 'hsl(210, 75%, 52%)',
   Legs: 'hsl(142, 55%, 40%)',
-  Arms: 'hsl(32, 90%, 52%)',
-  Shoulders: 'hsl(270, 60%, 58%)'
+  Arms: 'hsl(32, 90%, 52%)'
 }
 
 function getVolumeStatusColor(sets: number, muscle: MuscleGroup): string {

@@ -4,7 +4,7 @@ import { estimate1RM } from '@/lib/progressionEngine'
 import { MUSCLE_COLORS, formatDuration, formatDate } from '@/lib/utils'
 import type { Session } from '@/types'
 
-const MUSCLES = ['All', 'Chest', 'Back', 'Legs', 'Arms', 'Shoulders']
+const MUSCLES = ['All', 'Chest', 'Back', 'Legs', 'Arms']
 
 export function LogScreen() {
   const [filter, setFilter] = useState('All')

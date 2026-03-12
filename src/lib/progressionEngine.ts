@@ -40,7 +40,6 @@ export const VOLUME_LANDMARKS: Record<MuscleGroup, VolumeLandmarks> = {
   Chest: { MV: 8, MEV: 10, MAV: [12, 20], MRV: 22 },
   Back: { MV: 10, MEV: 12, MAV: [14, 22], MRV: 25 },
   Legs: { MV: 8, MEV: 10, MAV: [12, 20], MRV: 20 },
-  Shoulders: { MV: 6, MEV: 8, MAV: [12, 20], MRV: 26 },
   Arms: { MV: 6, MEV: 8, MAV: [14, 20], MRV: 26 }
 }
 
@@ -476,7 +475,7 @@ export function getWeeklyVolumeStats(): Array<{
   landmarks: VolumeLandmarks
 }> {
   const volumeByMuscle = getWeeklyVolumeByMuscle()
-  const muscles: MuscleGroup[] = ['Chest', 'Back', 'Legs', 'Arms', 'Shoulders']
+  const muscles: MuscleGroup[] = ['Chest', 'Back', 'Legs', 'Arms']
 
   return muscles.map(muscle => {
     const sets = volumeByMuscle[muscle] ?? 0

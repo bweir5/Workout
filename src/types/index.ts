@@ -74,7 +74,7 @@ export interface ProgressionState {
   lastUpdated: number
 }
 
-export type MuscleGroup = 'Chest' | 'Back' | 'Legs' | 'Arms' | 'Shoulders'
+export type MuscleGroup = 'Chest' | 'Back' | 'Legs' | 'Arms'
 
 export interface VolumeLandmarks {
   MV: number

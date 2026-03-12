@@ -3,9 +3,9 @@ import { BodyweightWidget } from './BodyweightWidget'
 import { ProteinWidget } from './ProteinWidget'
 import { MuscleSelector } from './MuscleSelector'
 import { WeeklyVolumeCompliance } from './WeeklyVolumeCompliance'
-import { getFatigueState, get7dayProteinCompliance, detectTrainingPhase, get7dayRollingAverage } from '@/lib/progressionEngine'
-import { getSessions, getLastBodyweight, getBodyweightEntries, getMesocycleWeek } from '@/lib/storage'
-import { getMesocycleWeekColor, getMesocycleWeekLabel, getPhaseColor, todayString } from '@/lib/utils'
+import { getFatigueState, get7dayProteinCompliance } from '@/lib/progressionEngine'
+import { getSessions, getLastBodyweight, getMesocycleWeek } from '@/lib/storage'
+import { getMesocycleWeekColor, getMesocycleWeekLabel } from '@/lib/utils'
 import { generateWeeklyCheckIn } from '@/lib/aiCoach'
 import type { MuscleGroup } from '@/types'
 
@@ -31,13 +31,6 @@ export function HomeScreen({ onStartWorkout }: Props) {
   const bodyweight = lastBW?.weight ?? 170
   const proteinCompliance = get7dayProteinCompliance(bodyweight)
 
-  const bwEntries = getBodyweightEntries()
-  const today = todayString()
-  const todayAvg = get7dayRollingAverage(bwEntries, today)
-  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
-  const prevAvg = get7dayRollingAverage(bwEntries, sevenDaysAgo)
-  const bwChange = todayAvg && prevAvg ? todayAvg - prevAvg : null
-
   const handleWeeklyCheckIn = async () => {
     setCheckInLoading(true)
     setCheckInText(null)
@@ -48,118 +41,88 @@ export function HomeScreen({ onStartWorkout }: Props) {
 
   return (
     <div className="pb-24 px-4 pt-4 max-w-lg mx-auto space-y-3" key={tick}>
+
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="font-display font-extrabold text-2xl text-white">IronLog</h1>
-          <div className="font-mono text-xs text-[#444]">
-            {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
-          </div>
-        </div>
+      <div className="flex items-center justify-between mb-1">
+        <h1 className="font-display font-extrabold text-xl text-white tracking-tight">IronLog</h1>
         <div
-          className="px-3 py-1.5 rounded-full font-mono text-xs font-medium"
-          style={{ backgroundColor: `${weekColor}22`, color: weekColor }}
+          className="px-2.5 py-1 rounded-full font-mono text-[10px] font-medium"
+          style={{ backgroundColor: `${weekColor}18`, color: weekColor }}
         >
           {weekLabel}
         </div>
       </div>
 
-      {/* Warning banners */}
+      {/* Alerts — shown only when needed */}
       {fatigue.urgentRecoveryFlag && (
-        <div className="border border-red-500/30 bg-red-500/10 rounded-xl p-3 fade-in-up">
-          <div className="font-display font-bold text-sm text-red-400">⚠ Urgent Recovery Flag</div>
-          <div className="font-mono text-xs text-red-400/70 mt-1">
-            Bodyweight dropping {bwChange !== null ? `${Math.abs(bwChange).toFixed(1)} lbs` : ''} this week + high fatigue. Consider deload before increasing training stress.
-          </div>
+        <div className="border border-red-500/20 bg-red-500/5 rounded-xl px-4 py-3 fade-in-up">
+          <div className="font-mono text-xs text-red-400 font-medium">⚠ Urgent Recovery — deload before adding volume</div>
         </div>
       )}
-
       {!fatigue.urgentRecoveryFlag && fatigue.deloadRecommended && (
-        <div className="border border-amber-500/30 bg-amber-500/10 rounded-xl p-3 fade-in-up">
-          <div className="font-display font-bold text-sm text-amber-400">Deload Recommended</div>
-          <div className="font-mono text-xs text-amber-400/70 mt-1">
-            {fatigue.consecutive_failed_sessions >= 3
-              ? `${fatigue.consecutive_failed_sessions} consecutive sessions with failed sets.`
-              : `7-day fatigue score ${fatigue.score7day} exceeds threshold.`} Recovery precedes growth.
-          </div>
+        <div className="border border-amber-500/20 bg-amber-500/5 rounded-xl px-4 py-3 fade-in-up">
+          <div className="font-mono text-xs text-amber-400 font-medium">Deload recommended — {fatigue.consecutive_failed_sessions >= 3 ? `${fatigue.consecutive_failed_sessions} consecutive failed sessions` : `fatigue score ${fatigue.score7day}`}</div>
         </div>
       )}
-
       {proteinCompliance < 80 && (
-        <div className="border border-amber-500/30 bg-amber-500/10 rounded-xl p-3 flex items-start gap-2 fade-in-up">
-          <div className="text-amber-400 mt-0.5">⚠</div>
-          <div>
-            <div className="font-display font-bold text-sm text-amber-400">Protein Below Target</div>
-            <div className="font-mono text-xs text-amber-400/70 mt-1">
-              7-day avg {proteinCompliance.toFixed(0)}% compliance. Volume capped at MEV — muscle protein synthesis requires sustained leucine availability.
-            </div>
-          </div>
+        <div className="border border-amber-500/20 bg-amber-500/5 rounded-xl px-4 py-3 fade-in-up">
+          <div className="font-mono text-xs text-amber-400 font-medium">⚠ Protein {proteinCompliance.toFixed(0)}% — volume capped at MEV</div>
         </div>
       )}
 
-      {/* Muscle selector — primary action, shown first */}
-      <MuscleSelector onSelectMuscle={onStartWorkout} />
+      {/* Muscle selector — primary action */}
+      <div>
+        <div className="font-mono text-[10px] text-[#444] uppercase tracking-widest mb-2">Train</div>
+        <MuscleSelector onSelectMuscle={onStartWorkout} />
+      </div>
 
-      {/* Nutrition section — collapsible to reduce scroll */}
+      {/* Nutrition — collapsible card */}
       <div className="card overflow-hidden">
         <button
           onClick={() => setShowNutrition(v => !v)}
-          className="w-full flex items-center justify-between px-4 py-3 active:bg-white/5 transition-colors"
+          className="w-full flex items-center justify-between px-4 py-3.5 active:bg-white/[0.02] transition-colors"
         >
-          <div className="flex items-center gap-3">
-            <span className="font-mono text-xs text-[#555] uppercase tracking-widest">Nutrition</span>
-            {proteinCompliance >= 90 && (
-              <span className="font-mono text-[10px] text-green-400">✓ On target</span>
-            )}
-            {proteinCompliance >= 70 && proteinCompliance < 90 && (
-              <span className="font-mono text-[10px] text-amber-400">{proteinCompliance.toFixed(0)}%</span>
-            )}
-            {proteinCompliance < 70 && (
-              <span className="font-mono text-[10px] text-red-400">⚠ {proteinCompliance.toFixed(0)}%</span>
-            )}
+          <span className="font-mono text-[10px] text-[#555] uppercase tracking-widest">Nutrition</span>
+          <div className="flex items-center gap-2">
+            {proteinCompliance >= 90
+              ? <span className="font-mono text-[10px] text-green-500">✓ on target</span>
+              : <span className="font-mono text-[10px]" style={{ color: proteinCompliance >= 70 ? 'hsl(38,85%,52%)' : 'hsl(4,70%,50%)' }}>{proteinCompliance.toFixed(0)}%</span>
+            }
+            <span className="font-mono text-xs text-[#333]">{showNutrition ? '∧' : '∨'}</span>
           </div>
-          <span className="font-mono text-sm text-[#444] transition-transform duration-200" style={{ display: 'inline-block', transform: showNutrition ? 'rotate(180deg)' : 'none' }}>
-            ∨
-          </span>
         </button>
-
         {showNutrition && (
-          <div className="border-t border-[#131316] fade-in-up">
-            <div className="p-4 space-y-4">
-              <BodyweightWidget onUpdate={refresh} />
-              <ProteinWidget onUpdate={refresh} />
-            </div>
+          <div className="px-4 pb-4 border-t border-[#0f0f12] space-y-4 fade-in-up pt-4">
+            <BodyweightWidget onUpdate={refresh} />
+            <ProteinWidget onUpdate={refresh} />
           </div>
         )}
       </div>
 
-      {/* Weekly volume compliance */}
+      {/* Weekly volume */}
       <WeeklyVolumeCompliance />
 
-      {/* Weekly check-in */}
+      {/* Weekly AI check-in */}
       <button
         onClick={handleWeeklyCheckIn}
         disabled={checkInLoading}
-        className="w-full card p-4 flex items-center justify-between active:scale-[0.98] transition-transform"
+        className="w-full card px-4 py-3.5 flex items-center justify-between active:scale-[0.99] transition-transform"
       >
         <div>
-          <div className="font-display font-bold text-white">Weekly AI Check-In</div>
-          <div className="font-mono text-xs text-[#444] mt-0.5">Volume, strength, nutrition analysis</div>
+          <div className="font-display font-bold text-sm text-white">Weekly Check-In</div>
+          <div className="font-mono text-[10px] text-[#444] mt-0.5">AI analysis · volume · nutrition</div>
         </div>
         {checkInLoading
-          ? <div className="w-5 h-5 border-2 border-[#333] border-t-white rounded-full animate-spin" />
-          : <span className="font-mono text-xl text-[#444]">→</span>
+          ? <div className="w-4 h-4 border-2 border-[#333] border-t-white rounded-full animate-spin" />
+          : <span className="font-mono text-base text-[#444]">→</span>
         }
       </button>
 
       {checkInText && (
-        <div className="card p-4 fade-in-up">
-          <div className="font-mono text-xs text-[#555] uppercase tracking-widest mb-3">Weekly Check-In</div>
-          <div className="font-mono text-sm text-[#aaa] leading-relaxed whitespace-pre-wrap">{checkInText}</div>
-          <button
-            onClick={() => setCheckInText(null)}
-            className="font-mono text-xs text-[#444] mt-3 underline underline-offset-2"
-          >
+        <div className="card px-4 py-4 fade-in-up">
+          <div className="font-mono text-[10px] text-[#444] uppercase tracking-widest mb-3">Weekly Check-In</div>
+          <div className="font-mono text-xs text-[#888] leading-relaxed whitespace-pre-wrap">{checkInText}</div>
+          <button onClick={() => setCheckInText(null)} className="font-mono text-[10px] text-[#444] mt-3">
             dismiss
           </button>
         </div>

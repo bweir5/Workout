@@ -16,9 +16,7 @@ const QUICK_AMOUNTS = [25, 30, 40, 50]
 
 export function ProteinWidget({ onUpdate }: Props) {
   const [customAmount, setCustomAmount] = useState('')
-  const [customLabel, setCustomLabel] = useState('')
   const [showCustom, setShowCustom] = useState(false)
-  const [showLabelField, setShowLabelField] = useState(false)
 
   const settings = getSettings()
   const lastBW = getLastBodyweight()
@@ -31,160 +29,104 @@ export function ProteinWidget({ onUpdate }: Props) {
   const progressPct = Math.min(compliance, 100)
   const color = getProteinColor(compliance)
 
-  const circumference = 2 * Math.PI * 38 // radius 38
-  const strokeDash = (progressPct / 100) * circumference
-
-  const addProtein = (grams: number, label?: string) => {
-    addProteinEntry({
-      id: generateId(),
-      date: todayString(),
-      grams,
-      label: label || undefined,
-      loggedAt: Date.now()
-    })
+  const addProtein = (grams: number) => {
+    addProteinEntry({ id: generateId(), date: todayString(), grams, loggedAt: Date.now() })
     onUpdate()
-  }
-
-  const handleQuickAdd = (amount: number) => {
-    addProtein(amount)
   }
 
   const handleCustomAdd = () => {
     const val = parseFloat(customAmount)
     if (!val || val <= 0 || val > 500) return
-    addProtein(val, customLabel || undefined)
+    addProtein(val)
     setCustomAmount('')
-    setCustomLabel('')
     setShowCustom(false)
-    setShowLabelField(false)
   }
 
+  const statusText =
+    compliance >= 100 ? '✓ Complete'
+    : compliance >= 90 ? '✓ On target'
+    : compliance >= 70 ? `${proteinTarget - totalProtein}g to go`
+    : `⚠ ${proteinTarget - totalProtein}g needed`
+
   return (
-    <div className="card p-4">
-      <div className="font-mono text-xs text-[#555] uppercase tracking-widest mb-3">Daily Protein</div>
-
-      {/* Arc progress + numbers */}
-      <div className="flex items-center gap-4 mb-4">
-        <div className="relative w-24 h-24 flex-shrink-0">
-          <svg width="96" height="96" viewBox="0 0 96 96">
-            <circle
-              cx="48" cy="48" r="38"
-              fill="none"
-              stroke="#131316"
-              strokeWidth="6"
-            />
-            <circle
-              cx="48" cy="48" r="38"
-              fill="none"
-              stroke={color}
-              strokeWidth="6"
-              strokeLinecap="round"
-              strokeDasharray={`${strokeDash} ${circumference}`}
-              strokeDashoffset={circumference * 0.25}
-              transform="rotate(-90 48 48)"
-              style={{ transition: 'stroke-dasharray 0.5s ease' }}
-            />
-          </svg>
-          <div className="absolute inset-0 flex flex-col items-center justify-center">
-            <span className="font-display font-bold text-lg text-white leading-none">{totalProtein}g</span>
-            <span className="font-mono text-[10px] text-[#555]">{compliance.toFixed(0)}%</span>
+    <div className="space-y-3">
+      {/* Header row */}
+      <div className="flex items-end justify-between">
+        <div>
+          <div className="font-mono text-[10px] text-[#444] uppercase tracking-widest mb-0.5">Protein</div>
+          <div className="flex items-baseline gap-1.5">
+            <span className="font-display font-bold text-2xl text-white">{totalProtein}g</span>
+            <span className="font-mono text-xs text-[#444]">/ {proteinTarget}g</span>
           </div>
         </div>
-
-        <div className="flex-1">
-          <div className="flex items-baseline gap-1 mb-1">
-            <span className="font-display font-bold text-3xl" style={{ color }}>{totalProtein}</span>
-            <span className="font-mono text-sm text-[#555]">/ {proteinTarget}g</span>
-          </div>
-          <div className="w-full bg-[#131316] rounded-full h-1.5 mb-2">
-            <div
-              className="h-1.5 rounded-full transition-all duration-500"
-              style={{ width: `${progressPct}%`, backgroundColor: color }}
-            />
-          </div>
-          <div className="font-mono text-xs" style={{ color }}>
-            {compliance >= 90 ? '✓ On target' : compliance >= 70 ? `${(proteinTarget - totalProtein)}g remaining` : `⚠ ${(proteinTarget - totalProtein)}g needed`}
-          </div>
-        </div>
+        <span className="font-mono text-xs pb-0.5" style={{ color }}>{statusText}</span>
       </div>
 
-      {/* Quick add buttons */}
-      <div className="flex gap-2 mb-3">
+      {/* Progress bar */}
+      <div className="h-1 bg-[#131316] rounded-full overflow-hidden">
+        <div
+          className="h-full rounded-full transition-all duration-500"
+          style={{ width: `${progressPct}%`, backgroundColor: color }}
+        />
+      </div>
+
+      {/* Quick-add buttons */}
+      <div className="flex gap-1.5">
         {QUICK_AMOUNTS.map(amount => (
           <button
             key={amount}
-            onClick={() => handleQuickAdd(amount)}
-            className="flex-1 bg-[#0f0f12] border border-[#1a1a20] rounded-lg py-2.5 font-mono text-sm text-[#888] active:scale-95 active:border-[#333] transition-all"
+            onClick={() => addProtein(amount)}
+            className="flex-1 bg-[#0f0f12] border border-[#1a1a20] rounded-lg py-2 font-mono text-xs text-[#666] active:scale-95 active:border-[#2a2a30] active:text-white transition-all"
           >
-            +{amount}g
+            +{amount}
           </button>
         ))}
         <button
           onClick={() => setShowCustom(!showCustom)}
-          className="bg-[#0f0f12] border border-[#1a1a20] rounded-lg px-3 py-2.5 font-mono text-sm text-[#888] active:scale-95 transition-all"
+          className={`bg-[#0f0f12] border rounded-lg px-3 py-2 font-mono text-xs transition-all active:scale-95 ${
+            showCustom ? 'border-[#333] text-white' : 'border-[#1a1a20] text-[#555]'
+          }`}
         >
-          +custom
+          +g
         </button>
       </div>
 
       {/* Custom input */}
       {showCustom && (
-        <div className="mb-3 fade-in-up">
-          <div className="flex gap-2 mb-2">
-            <input
-              type="number"
-              inputMode="numeric"
-              placeholder="grams"
-              value={customAmount}
-              onChange={e => setCustomAmount(e.target.value)}
-              onKeyDown={e => e.key === 'Enter' && handleCustomAdd()}
-              className="flex-1 bg-[#0f0f12] border border-[#1a1a20] rounded-lg px-3 py-2 font-mono text-sm text-white focus:outline-none focus:border-[#333] placeholder:text-[#333]"
-            />
-            <button
-              onClick={() => setShowLabelField(!showLabelField)}
-              className="bg-[#0f0f12] border border-[#1a1a20] rounded-lg px-3 py-2 font-mono text-xs text-[#555] active:scale-95 transition-all"
-            >
-              label
-            </button>
-            <button
-              onClick={handleCustomAdd}
-              className="bg-white text-[#050507] font-display font-bold rounded-lg px-4 py-2 active:scale-95 transition-transform"
-            >
-              Add
-            </button>
-          </div>
-          {showLabelField && (
-            <input
-              type="text"
-              placeholder="e.g. post-workout shake"
-              value={customLabel}
-              onChange={e => setCustomLabel(e.target.value)}
-              className="w-full bg-[#0f0f12] border border-[#1a1a20] rounded-lg px-3 py-2 font-mono text-sm text-white focus:outline-none focus:border-[#333] placeholder:text-[#333]"
-            />
-          )}
+        <div className="flex gap-2 fade-in-up">
+          <input
+            type="number"
+            inputMode="numeric"
+            placeholder="grams"
+            value={customAmount}
+            onChange={e => setCustomAmount(e.target.value)}
+            onKeyDown={e => e.key === 'Enter' && handleCustomAdd()}
+            autoFocus
+            className="flex-1 bg-[#0f0f12] border border-[#1a1a20] rounded-lg px-3 py-2 font-mono text-sm text-white focus:outline-none focus:border-[#333] placeholder:text-[#333]"
+          />
+          <button
+            onClick={handleCustomAdd}
+            className="bg-white text-[#050507] font-display font-bold rounded-lg px-4 py-2 active:scale-95 transition-transform text-sm"
+          >
+            Add
+          </button>
         </div>
       )}
 
       {/* Entry list */}
       {todayEntries.length > 0 && (
-        <div className="border-t border-[#131316] pt-3 space-y-1.5">
+        <div className="border-t border-[#0f0f12] pt-2 space-y-1">
           {[...todayEntries].reverse().map(entry => (
-            <div key={entry.id} className="flex items-center justify-between">
+            <div key={entry.id} className="flex items-center justify-between py-0.5">
               <div className="flex items-center gap-2">
-                <span className="font-display font-bold text-sm text-white">{entry.grams}g</span>
-                {entry.label && (
-                  <span className="font-mono text-xs text-[#555]">{entry.label}</span>
-                )}
+                <span className="font-mono text-sm text-[#888]">{entry.grams}g</span>
+                {entry.label && <span className="font-mono text-xs text-[#444]">{entry.label}</span>}
               </div>
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-xs text-[#444]">{formatTime(entry.loggedAt)}</span>
+              <div className="flex items-center gap-2">
+                <span className="font-mono text-[10px] text-[#333]">{formatTime(entry.loggedAt)}</span>
                 <button
-                  onClick={() => {
-                    deleteProteinEntry(entry.id)
-                    onUpdate()
-                  }}
-                  className="w-6 h-6 flex items-center justify-center rounded-full text-[#444] active:text-red-400 active:bg-red-500/10 transition-colors"
-                  aria-label="Remove entry"
+                  onClick={() => { deleteProteinEntry(entry.id); onUpdate() }}
+                  className="w-5 h-5 flex items-center justify-center text-[#333] active:text-red-400 transition-colors font-mono text-base leading-none"
                 >
                   ×
                 </button>
@@ -192,10 +134,6 @@ export function ProteinWidget({ onUpdate }: Props) {
             </div>
           ))}
         </div>
-      )}
-
-      {todayEntries.length === 0 && (
-        <div className="font-mono text-xs text-[#333] text-center py-2">No protein logged today</div>
       )}
     </div>
   )

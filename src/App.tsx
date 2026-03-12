@@ -105,24 +105,24 @@ export default function App() {
     <div className="min-h-screen bg-[#050507] relative">
       {/* WIP banner */}
       {wip && screen !== 'workout' && (
-        <div className="mx-4 mt-4 max-w-lg mx-auto">
+        <div className="max-w-lg mx-auto px-4 pt-4">
           <div
-            className="card flex items-center justify-between"
-            style={{ borderColor: 'rgba(251, 191, 36, 0.2)', backgroundColor: 'rgba(251, 191, 36, 0.05)' }}
+            className="card flex items-stretch overflow-hidden"
+            style={{ borderColor: 'rgba(251, 191, 36, 0.15)', backgroundColor: 'rgba(251, 191, 36, 0.04)' }}
           >
             <button
-              className="flex-1 flex items-center justify-between p-3 active:scale-[0.99] transition-transform"
+              className="flex-1 flex items-center justify-between px-4 py-3 active:bg-amber-400/5 transition-colors"
               onClick={() => startWorkout(wip.muscle as MuscleGroup)}
             >
               <div>
                 <div className="font-display font-bold text-amber-400 text-sm">Resume {wip.muscle}</div>
-                <div className="font-mono text-[10px] text-amber-400/50">Tap to continue session</div>
+                <div className="font-mono text-[10px] text-amber-400/40 mt-0.5">saved · tap to continue</div>
               </div>
-              <span className="font-mono text-amber-400 text-lg mr-3">→</span>
+              <span className="font-mono text-amber-400/70 text-base">→</span>
             </button>
             <button
               onClick={() => setShowDiscardConfirm(true)}
-              className="px-3 py-4 font-mono text-xs text-amber-400/40 hover:text-red-400 transition-colors border-l border-amber-500/10"
+              className="px-4 flex items-center justify-center font-mono text-[#444] active:text-red-400 transition-colors border-l border-amber-500/10"
               aria-label="Discard workout"
             >
               ✕

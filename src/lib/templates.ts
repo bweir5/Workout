@@ -218,57 +218,6 @@ export const WORKOUT_TEMPLATES: WorkoutTemplate[] = [
       }
     ]
   },
-  {
-    muscle: 'Shoulders',
-    exercises: [
-      {
-        name: 'Overhead Press (Barbell)',
-        muscleGroup: 'Shoulders',
-        type: 'compound',
-        targetRepRange: [6, 8],
-        sets: [
-          { tag: 'W', weight: 95, reps: 5 },
-          { tag: '', weight: 145, reps: 7 },
-          { tag: '', weight: 145, reps: 7 },
-          { tag: '', weight: 145, reps: 7 }
-        ]
-      },
-      {
-        name: 'Lateral Raise (Dumbbell)',
-        muscleGroup: 'Shoulders',
-        type: 'isolation',
-        targetRepRange: [10, 12],
-        sets: [
-          { tag: '', weight: 60, reps: 10 },
-          { tag: '', weight: 60, reps: 10 },
-          { tag: '', weight: 60, reps: 10 },
-          { tag: '', weight: 60, reps: 10 }
-        ]
-      },
-      {
-        name: 'Face Pull (Cable)',
-        muscleGroup: 'Shoulders',
-        type: 'isolation',
-        targetRepRange: [12, 15],
-        sets: [
-          { tag: '', weight: 70, reps: 15 },
-          { tag: '', weight: 70, reps: 15 },
-          { tag: '', weight: 70, reps: 15 }
-        ]
-      },
-      {
-        name: 'Shrug (Dumbbell)',
-        muscleGroup: 'Shoulders',
-        type: 'isolation',
-        targetRepRange: [14, 16],
-        sets: [
-          { tag: '', weight: 120, reps: 15 },
-          { tag: '', weight: 120, reps: 15 },
-          { tag: '', weight: 120, reps: 15 }
-        ]
-      }
-    ]
-  }
 ]
 
 export const getTemplateForMuscle = (muscle: string): WorkoutTemplate | null =>

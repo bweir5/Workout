@@ -4,16 +4,14 @@ export const MUSCLE_COLORS: Record<string, string> = {
   Chest: 'hsl(4, 75%, 52%)',
   Back: 'hsl(210, 75%, 52%)',
   Legs: 'hsl(142, 55%, 40%)',
-  Arms: 'hsl(32, 90%, 52%)',
-  Shoulders: 'hsl(270, 60%, 58%)'
+  Arms: 'hsl(32, 90%, 52%)'
 }
 
 export const MUSCLE_COLORS_BG: Record<string, string> = {
   Chest: 'rgba(220, 50, 47, 0.12)',
   Back: 'rgba(47, 135, 220, 0.12)',
   Legs: 'rgba(50, 150, 85, 0.12)',
-  Arms: 'rgba(230, 140, 30, 0.12)',
-  Shoulders: 'rgba(150, 80, 200, 0.12)'
+  Arms: 'rgba(230, 140, 30, 0.12)'
 }
 
 export function formatDuration(ms: number): string {
@@ -108,5 +106,5 @@ export function clamp(value: number, min: number, max: number): number {
 }
 
 export function getMuscles(): MuscleGroup[] {
-  return ['Chest', 'Back', 'Legs', 'Arms', 'Shoulders']
+  return ['Chest', 'Back', 'Legs', 'Arms']
 }
